@@ -4,7 +4,7 @@ import pandas as pd
 class TemperaturePredictor:
     def __init__(self):
         self.models = {
-            'linear_regression': joblib.load("models/regression/linear_regression_model.pkl"),
+            'linear_regression': joblib.load("models/regression/linear_regression_sgd.pkl"),
             
         }
     
