@@ -6,6 +6,9 @@ import os
 from datetime import datetime
 import importlib.util
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Add custom CSS for the weather dashboard theme
 def inject_custom_css():
     st.markdown("""
