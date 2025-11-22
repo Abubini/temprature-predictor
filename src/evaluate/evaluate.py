@@ -89,153 +89,93 @@ def evaluate_model(model, X_test, y_test, model_name):
     }
 
 def create_regression_visualizations(models, X_test, y_test, X_train=None, y_train=None):
-    """Create comprehensive visualizations for all models"""
+    """Create simplified visualizations:
+       - All models: Actual vs Predicted + Best Fit Line
+       - Per model: Best Fit Line + Residual Distribution
+    """
     print("\nCreating visualizations...")
     
-    # Ensure visuals directory exists
+    # Ensure directory exists
     os.makedirs("visuals/regression", exist_ok=True)
-    
-    # Create subplots for comparison
-    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-    fig.suptitle('Linear Regression Models - Performance Visualizations', fontsize=16, fontweight='bold')
-    
-    # Colors for different models
+
+    # ---------- ALL MODELS COMPARISON ----------
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+    fig.suptitle('Linear Regression Models - Actual vs Predicted Comparison', fontsize=16, fontweight='bold')
+
     colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
     model_names = ['OLS Regression', 'Batch Gradient Descent', 'Stochastic Gradient Descent']
     model_keys = ['ols', 'bgd', 'sgd']
-    
-    # Plot 1: Actual vs Predicted for all models
-    for idx, (model_key, model_name, color) in enumerate(zip(model_keys, model_names, colors)):
-        model = models[model_key]
+
+    for idx, (key, name, color) in enumerate(zip(model_keys, model_names, colors)):
+        model = models[key]
         y_pred = model.predict(X_test)
-        
-        # Scatter plot: Actual vs Predicted
-        ax1 = axes[0, idx]
-        ax1.scatter(y_test, y_pred, alpha=0.6, color=color, s=50)
-        
+
+        ax = axes[idx]
+        ax.scatter(y_test, y_pred, alpha=0.6, color=color, s=40)
+
+        # Best fit line
+        z = np.polyfit(y_test, y_pred, 1)
+        p = np.poly1d(z)
+        ax.plot(y_test, p(y_test), "r--", linewidth=2, alpha=0.8)
+
         # Perfect prediction line
         min_val = min(y_test.min(), y_pred.min())
         max_val = max(y_test.max(), y_pred.max())
-        ax1.plot([min_val, max_val], [min_val, max_val], 'r--', alpha=0.8, linewidth=2)
-        
-        ax1.set_xlabel('Actual Temperature (C)')
-        ax1.set_ylabel('Predicted Temperature (C)')
-        ax1.set_title(f'{model_name}\nActual vs Predicted')
-        ax1.grid(True, alpha=0.3)
-        
-        # Add R² to plot
-        r2 = r2_score(y_test, y_pred)
-        ax1.text(0.05, 0.95, f'R² = {r2:.4f}', transform=ax1.transAxes, 
-                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8),
-                verticalalignment='top')
-    
-    # Plot 2: Residual plots
-    for idx, (model_key, model_name, color) in enumerate(zip(model_keys, model_names, colors)):
-        model = models[model_key]
-        y_pred = model.predict(X_test)
-        residuals = y_test - y_pred
-        
-        ax2 = axes[1, idx]
-        ax2.scatter(y_pred, residuals, alpha=0.6, color=color, s=50)
-        ax2.axhline(y=0, color='red', linestyle='--', alpha=0.8)
-        ax2.set_xlabel('Predicted Temperature (C)')
-        ax2.set_ylabel('Residuals')
-        ax2.set_title(f'{model_name}\nResidual Plot')
-        ax2.grid(True, alpha=0.3)
-        
-        # Add residual statistics
-        mean_residual = residuals.mean()
-        ax2.text(0.05, 0.95, f'Mean Residual: {mean_residual:.4f}', transform=ax2.transAxes,
-                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8),
-                verticalalignment='top')
-    
+        ax.plot([min_val, max_val], [min_val, max_val], 'g-', alpha=0.5, linewidth=1)
+
+        ax.set_title(name)
+        ax.set_xlabel('Actual Temperature (C)')
+        ax.set_ylabel('Predicted Temperature (C)')
+        ax.grid(True, alpha=0.3)
+
     plt.tight_layout()
     plt.savefig("visuals/regression/all_models_comparison.png", dpi=300, bbox_inches='tight')
     plt.close()
-    
-    # Create individual detailed plots for each model
-    for model_key, model_name, color in zip(model_keys, model_names, colors):
-        model = models[model_key]
+
+
+    # ---------- INDIVIDUAL MODEL DETAIL PLOTS ----------
+    for key, name, color in zip(model_keys, model_names, colors):
+        model = models[key]
         y_pred = model.predict(X_test)
-        
-        # Create individual model visualization
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
-        fig.suptitle(f'{model_name} - Detailed Analysis', fontsize=16, fontweight='bold')
-        
-        # 1. Actual vs Predicted with regression line
-        ax1.scatter(y_test, y_pred, alpha=0.6, color=color, s=50)
-        
-        # Add regression line for the predictions
+        residuals = y_test - y_pred
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+        fig.suptitle(f'{name} - Detailed Analysis', fontsize=16, fontweight='bold')
+
+        # 1. Best-fit actual vs predicted
+        ax1.scatter(y_test, y_pred, alpha=0.6, color=color, s=40)
+
+        # Best fit line
         z = np.polyfit(y_test, y_pred, 1)
         p = np.poly1d(z)
-        ax1.plot(y_test, p(y_test), "r--", alpha=0.8, linewidth=2, 
-                label=f'Fit: y = {z[0]:.3f}x + {z[1]:.3f}')
-        
+        ax1.plot(y_test, p(y_test), "r--", linewidth=2, alpha=0.8,
+                 label=f'Fit: y = {z[0]:.3f}x + {z[1]:.3f}')
+
         # Perfect prediction line
         min_val = min(y_test.min(), y_pred.min())
         max_val = max(y_test.max(), y_pred.max())
-        ax1.plot([min_val, max_val], [min_val, max_val], 'g-', alpha=0.5, linewidth=1, 
-                label='Perfect Prediction')
-        
+        ax1.plot([min_val, max_val], [min_val, max_val], 'g-', alpha=0.5, linewidth=1)
+
         ax1.set_xlabel('Actual Temperature (C)')
         ax1.set_ylabel('Predicted Temperature (C)')
-        ax1.set_title('Actual vs Predicted with Best Fit Line')
+        ax1.set_title('Actual vs Predicted')
         ax1.legend()
         ax1.grid(True, alpha=0.3)
-        
+
         # 2. Residual distribution
-        residuals = y_test - y_pred
-        ax2.hist(residuals, bins=30, alpha=0.7, color=color, edgecolor='black')
-        ax2.axvline(residuals.mean(), color='red', linestyle='--', linewidth=2, 
-                   label=f'Mean: {residuals.mean():.3f}')
+        ax2.hist(residuals, bins=25, alpha=0.7, color=color, edgecolor='black')
+        ax2.axvline(residuals.mean(), color='red', linestyle='--', linewidth=2)
         ax2.set_xlabel('Residuals')
         ax2.set_ylabel('Frequency')
         ax2.set_title('Residual Distribution')
-        ax2.legend()
         ax2.grid(True, alpha=0.3)
-        
-        # 3. Prediction error over actual values
-        ax3.scatter(y_test, residuals, alpha=0.6, color=color, s=50)
-        ax3.axhline(y=0, color='red', linestyle='--', alpha=0.8)
-        ax3.set_xlabel('Actual Temperature (C)')
-        ax3.set_ylabel('Residuals')
-        ax3.set_title('Prediction Error vs Actual Values')
-        ax3.grid(True, alpha=0.3)
-        
-        # 4. Q-Q plot for normality of residuals
-        from scipy import stats
-        stats.probplot(residuals, dist="norm", plot=ax4)
-        ax4.set_title('Q-Q Plot: Normality of Residuals')
-        ax4.grid(True, alpha=0.3)
-        
+
         plt.tight_layout()
-        plt.savefig(f"visuals/regression/{model_key}_detailed_analysis.png", dpi=300, bbox_inches='tight')
+        plt.savefig(f"visuals/regression/{key}_detailed_analysis.png", dpi=300, bbox_inches='tight')
         plt.close()
-    
-    # Create coefficients comparison plot (for OLS and feature importance)
-    if hasattr(models['ols'], 'coef_'):
-        plt.figure(figsize=(12, 8))
-        
-        # Get feature names
-        feature_names = X_test.columns
-        
-        # Plot OLS coefficients
-        coefficients = models['ols'].coef_
-        sorted_idx = np.argsort(np.abs(coefficients))[::-1]
-        
-        plt.barh(range(len(sorted_idx[:10])), 
-                coefficients[sorted_idx[:10]], 
-                color='skyblue', edgecolor='black')
-        plt.yticks(range(len(sorted_idx[:10])), 
-                  [feature_names[i] for i in sorted_idx[:10]])
-        plt.xlabel('Coefficient Value')
-        plt.title('Top 10 Feature Coefficients - OLS Regression')
-        plt.grid(True, alpha=0.3, axis='x')
-        plt.tight_layout()
-        plt.savefig("visuals/regression/feature_coefficients.png", dpi=300, bbox_inches='tight')
-        plt.close()
-    
-    print("Visualizations saved to: visuals/regression/")
+
+    print("Visualizations saved to visuals/regression/")
+
 
 def compare_models(results):
     """Compare all models and display results"""
