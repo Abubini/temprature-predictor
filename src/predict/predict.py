@@ -30,40 +30,29 @@ API_KEY = os.getenv("OWM_API_KEY")
 # -----------------------------
 # 3. Fetch real-time weather with error handling
 # -----------------------------
-def get_realtime_weather(lat=9.03, lon=38.74):
-    """
-    Fetch current weather data from OpenWeatherMap.
-    Returns None if API fails or key is invalid.
-    """
-    url = (
-        f"https://api.openweathermap.org/data/2.5/weather?"
-        f"lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
-    )
-
+def get_realtime_weather():
+    import requests
     try:
-        response = requests.get(url, timeout=10)
+        url = f"http://api.openweathermap.org/data/2.5/weather?q=Addis+Ababa&appid={API_KEY}&units=metric"
+        response = requests.get(url)
         data = response.json()
+        if response.status_code != 200:
+            print("Weather API Error:", data)
+            return None
+        return {
+            "actual_temp": data["main"]["temp"],
+            "humidity": data["main"]["humidity"] / 100,
+            "wind_speed": data["wind"]["speed"],
+            "wind_bearing": data["wind"]["deg"],
+            "pressure": data["main"]["pressure"],
+            "visibility": data.get("visibility", 10000)/1000,
+            "condition": data["weather"][0]["main"],
+            "location": data["name"],
+            "country": data["sys"]["country"]
+        }
     except Exception as e:
-        print("Error connecting to OpenWeatherMap:", e)
+        print("Exception in get_realtime_weather:", e)
         return None
-
-    # Check for API errors
-    if "main" not in data:
-        print("Error fetching weather data:", data)
-        return None
-
-    # Extract features
-    weather = {
-        "temperature": data["main"]["temp"],                      # Actual temperature
-        "humidity": data["main"]["humidity"] / 100,               # 0-1
-        "pressure": data["main"]["pressure"],                     # millibars
-        "visibility": data.get("visibility", 10000) / 1000,       # meters → km
-        "wind_speed": data["wind"].get("speed", 0) * 3.6,         # m/s → km/h
-        "wind_bearing": data["wind"].get("deg", 0),               # degrees
-        "actual_temp": data["main"]["temp"]                       # For comparison
-    }
-
-    return weather
 
 # -----------------------------
 # 4. Convert API data -> model features
