@@ -2,6 +2,10 @@ import requests
 import joblib
 import numpy as np
 from datetime import datetime
+from dotenv import load_dotenv
+import os
+
+
 
 # -----------------------------
 # 1. Load your trained models
@@ -19,7 +23,9 @@ models = {
 # -----------------------------
 # 2. OpenWeatherMap API Key
 # -----------------------------
-API_KEY = "d0aa7f482997759c0ab527e9f7f6e250"
+load_dotenv()
+
+API_KEY = os.getenv("OWM_API_KEY")
 
 # -----------------------------
 # 3. Fetch real-time weather with error handling
